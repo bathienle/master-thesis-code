@@ -1,0 +1,5 @@
+# Python outputs
+__pycache__/
+
+# IDE
+.vscode/
