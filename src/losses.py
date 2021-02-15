@@ -2,6 +2,7 @@
 Loss functions
 """
 
+import torch
 import torch.nn as nn
 
 
@@ -20,11 +21,23 @@ class SoftDiceLoss(nn.Module):
 
 
 class Loss(nn.Module):
-    def __init__(self, weight):
+    def __init__(self):
         super(Loss, self).__init__()
 
         self.dice = SoftDiceLoss()
-        self.bce = nn.BCELoss(weight=weight)
+        self.bce = nn.BCELoss(reduction='none')
 
     def forward(self, preds, targets):
-        return self.dice(preds, targets) - self.bce(preds, targets)
+        # Compute the complement mask
+        complement = torch.logical_not(targets).float()
+
+        # Compute the alpha factor
+        alpha = max(complement.sum() / targets.sum(), 1)
+
+        # Compute the adaptive weight
+        weights = alpha**2 * targets + alpha * complement + 1
+
+        # Compute the weighted cross entropy loss
+        bce_loss = (weights * self.bce(preds, targets)).mean()
+
+        return self.dice(preds, targets) + bce_loss
