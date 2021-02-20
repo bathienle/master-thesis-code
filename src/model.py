@@ -11,7 +11,7 @@ class ConvBlock(nn.Sequential):
         super(ConvBlock, self).__init__(
             nn.Conv2d(in_channels, out_channels, kernel_size, padding=padding, dilation=dilation),
             nn.BatchNorm2d(out_channels),
-            nn.ReLU()
+            nn.ReLU(inplace=True)
         )
 
 
@@ -26,7 +26,7 @@ class ResidualBlock(nn.Module):
             nn.BatchNorm2d(out_channels)
         )
         self.conv3 = nn.Conv2d(in_channels, out_channels, 1) if self.increase else None
-        self.out = nn.ReLU()
+        self.out = nn.ReLU(inplace=True)
 
     def forward(self, input):
         output = self.conv1(input)
@@ -48,18 +48,16 @@ class MultiScaleConvBlock(nn.Module):
         )
 
     def forward(self, input):
-        outputs = [conv(input) for conv in self.convs]
-
-        return torch.cat(outputs, 1)
+        return torch.cat([conv(input) for conv in self.convs], 1)
 
 
 class NuClick(nn.Module):
-    def __init__(self, in_channels):
+    def __init__(self):
         super(NuClick, self).__init__()
 
         self.downs = nn.ModuleList([
             nn.Sequential(
-                ConvBlock(in_channels, 64, 7, 3),
+                ConvBlock(5, 64, 7, 3),
                 ConvBlock(64, 32, 5, 2),
                 ConvBlock(32, 32)
             ),
