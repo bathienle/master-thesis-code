@@ -7,24 +7,26 @@ import scipy.ndimage as ndi
 import torch
 
 from scipy.ndimage.morphology import distance_transform_edt
+
 from skimage.morphology import (
     skeletonize_3d, remove_small_objects, remove_small_holes
 )
 
 
-def create_inclusion_map(mask):
-    """Create an inclusion map given a mask.
+def create_signal(mask):
+    """Create the guiding signal.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     mask : torch tensor
-        A binary mask.
+        The binary mask to transform.
 
-    Return:
-    -------
-    inclusion : torch tensor
-        The inclusion map.
+    Return
+    ------
+    signal : torch tensor
+        The guiding signal.
     """
+
     # Compute the Euclidian distance transform of the mask
     edt = distance_transform_edt(mask)
 
@@ -39,46 +41,31 @@ def create_inclusion_map(mask):
     mask = edt > threshold
 
     # Apply a morphological skeleton on the new mask
-    inclusion = skeletonize_3d(mask)
+    signal = skeletonize_3d(mask)
 
-    return torch.tensor(inclusion)
-
-
-def create_exclusion_map(mask):
-    """Create an exclusion map given a mask.
-
-    Parameters:
-    -----------
-    mask : torch tensor
-        A binary mask.
-
-    Return:
-    -------
-    exclusion : torch tensor
-        The exclusion map.
-    """
-    return torch.zeros(mask.shape)
+    return torch.tensor(signal)
 
 
 def post_process(preds, threshold=0.5, min_size=10, area_threshold=30):
-    """Post-process a prediction.
+    """Post process the predictions.
 
-    Parameters:
-    -----------
+    Parameter
+    ---------
     preds : torch tensor
-        The predicted mask.
-    threshold : int (default=0.5)
-        The threshold to remove small predictions.
+        The predicted masks.
+    threshold : float (default=0.5)
+        The mininum threshold for the taking the output into account.
     min_size : int (default=10)
-        The minimum size of an object.
+        The minimum size of a prediction.
     area_threshold : int (default=30)
-        The minimum area of an object.
+        The minimum area of a prediction.
 
-    Return:
-    -------
+    Return
+    ------
     masks : torch tensor
-        The final prediction mask.
+        The post-processed predictions.
     """
+
     # Remove small output number
     masks = preds > threshold
 
