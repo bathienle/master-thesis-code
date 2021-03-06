@@ -24,7 +24,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 def parse_arguments():
-    """Parse the arguments of the program. 
+    """Parse the arguments of the program.
 
     Return
     ------
@@ -37,7 +37,6 @@ def parse_arguments():
     # Training parameters
     parser.add_argument(
         '--epochs',
-        dest='epochs',
         type=int,
         default=15,
         help="Number of epochs to train the model."
@@ -51,7 +50,6 @@ def parse_arguments():
     )
     parser.add_argument(
         '--lr',
-        dest='lr',
         type=float,
         default=3e-3,
         help="The learning rate of the optimizer."
@@ -66,30 +64,38 @@ def parse_arguments():
 
     # Misc parameters
     parser.add_argument(
+        '--type',
+        type=str,
+        choices=['gland', 'bronchus', 'tumor'],
+        help="The type of object to detect."
+    )
+    parser.add_argument(
         '--path',
-        dest='path',
         type=str,
         help="Path to the dataset."
     )
     parser.add_argument(
         '--dest',
-        dest='dest',
         type=str,
         default='./',
         help="The path to save the weights of the model."
     )
     parser.add_argument(
         '--resume',
-        dest='resume',
         type=bool,
         default=False,
         help="Resume the training of the model.")
     parser.add_argument(
         '--checkpoint',
-        dest='checkpoint',
         type=str,
         default='./checkpoint.pth',
         help="Checkpoint of the state of the training."
+    )
+    parser.add_argument(
+        '--step',
+        type=int,
+        default=20,
+        help="Save a checkpoint every step epoch."
     )
     parser.add_argument(
         '--stat',
@@ -158,6 +164,7 @@ def validate(model, valloader, criterion):
     losses : python list of floats
         The losses during the validation.
     """
+
     model.eval()
     losses = []
 
@@ -188,6 +195,7 @@ if __name__ == "__main__":
 
     # Transform for images and masks
     transform = transforms.Compose([
+        transforms.Resize((512, 512)),
         transforms.ToTensor()
     ])
 
@@ -250,11 +258,22 @@ if __name__ == "__main__":
         print(f"{minutes:.0f}m {seconds:.0f}s")
         total_time += elapsed_time
 
+        # Checkpoint save
+        if epoch % args.step:
+            state = {
+                'epoch': epoch,
+                'model_state_dict': model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict()
+            }
+
+            torch.save(state, os.path.join(
+                args.dest, f'{args.type}_checkpoint.pth'))
+
     minutes, seconds = convert_time(total_time)
     print(f"Training complete in {minutes:.0f}m {seconds:.0f}s")
 
     # Save the trained model
-    torch.save(model.state_dict(), os.path.join(args.dest, 'model.pth'))
+    torch.save(model.state_dict(), os.path.join(args.dest, f'{args.type}_model.pth'))
 
     # Save the training state for further training
     state = {
@@ -263,4 +282,4 @@ if __name__ == "__main__":
         'optimizer_state_dict': optimizer.state_dict()
     }
 
-    torch.save(state, os.path.join(args.dest, 'checkpoint.pth'))
+    torch.save(state, os.path.join(args.dest, f'{args.type}_checkpoint.pth'))
