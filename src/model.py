@@ -7,7 +7,33 @@ import torch.nn as nn
 
 
 class ConvBlock(nn.Sequential):
+    """
+    Class representing a convolutional block.
+
+    Notes
+    -----
+    A convolutional block is composed of a convolutional layer followed by
+    a batch normalization layer and ends with a ReLU activation function.
+    """
+
     def __init__(self, in_channels, out_channels, kernel_size=3, padding=1, dilation=1):
+        """
+        Initialise the class.
+
+        Parameters
+        ----------
+        in_channels : int
+            The number of input channels.
+        out_channels : int
+            The number of output channels.
+        kernel_size : int (default=3)
+            The kernel size.
+        padding : int (default=1)
+            The padding rate.
+        dilation : int (default=1)
+            The dilation rate.
+        """
+
         super(ConvBlock, self).__init__(
             nn.Conv2d(in_channels, out_channels, kernel_size, padding=padding, dilation=dilation),
             nn.BatchNorm2d(out_channels),
@@ -16,7 +42,36 @@ class ConvBlock(nn.Sequential):
 
 
 class ResidualBlock(nn.Module):
+    """
+    Class representing a residual block.
+
+    Methods
+    -------
+    forward(input)
+        Compute the forward pass given an input.
+
+    Notes
+    -----
+    A residual block is the concatenation of two or three convolutional blocks
+    followed by a ReLU activation function.
+    """
+
     def __init__(self, in_channels, out_channels, kernel_size=3, padding=1):
+        """
+        Initialise the class.
+
+        Parameters
+        ----------
+        in_channels : int
+            The number of input channels.
+        out_channels : int
+            The number of output channels.
+        kernel_size : int (default=3)
+            The kernel size.
+        padding : int (default=1)
+            The padding rate.
+        """
+
         super(ResidualBlock, self).__init__()
 
         self.increase = in_channels != out_channels
@@ -29,6 +84,20 @@ class ResidualBlock(nn.Module):
         self.out = nn.ReLU(inplace=True)
 
     def forward(self, input):
+        """
+        Compute the forward pass given an input.
+
+        Parameters
+        ----------
+        input : torch tensor
+            The input of the block.
+
+        Return
+        ------
+        output : torch tensor
+            The output of the forward pass.
+        """
+
         output = self.conv1(input)
         output = self.conv2(output)
 
@@ -39,7 +108,37 @@ class ResidualBlock(nn.Module):
 
 
 class MultiScaleConvBlock(nn.Module):
+    """
+    Class representing a multi-scale convolutional block.
+
+    Methods
+    -------
+    forward(input)
+        Compute the forward pass given an input.
+
+    Notes
+    -----
+    A multi-scale convolutional block is composed of four convolutional blocks
+    each taking as input channels one fourth of the output channels and are
+    combining at the end of the forward pass.
+    """
+
     def __init__(self, channels, kernel_sizes, paddings, dilations):
+        """
+        Initialise the class.
+
+        Parameters
+        ----------
+        channel : int
+            The number of output channels.
+        kernel_sizes : list of int
+            The kernel size for each layer.
+        paddings : list of int
+            The padding rates.
+        dilations : list of int
+            The dilations rates.
+        """
+
         super(MultiScaleConvBlock, self).__init__()
 
         self.convs = nn.ModuleList(
@@ -48,11 +147,41 @@ class MultiScaleConvBlock(nn.Module):
         )
 
     def forward(self, input):
-        return torch.cat([conv(input) for conv in self.convs], 1)
+        """
+        Compute the forward pass given an input.
+
+        Parameters
+        ----------
+        input : torch tensor
+            The input of the block.
+
+        Return
+        ------
+        output : torch tensor
+            The output of the forward pass.
+        """
+        return torch.cat([conv(input) for conv in self.convs], dim=1)
 
 
 class NuClick(nn.Module):
+    """
+    Class representing the NuClick neural network architecture.
+
+    Methods
+    -------
+    forward(x)
+        Predict the segmentation mask of an image.
+
+    Notes
+    -----
+    Reference paper: https://arxiv.org/pdf/2005.14511.pdf
+    """
+
     def __init__(self):
+        """
+        Initialise the class.
+        """
+
         super(NuClick, self).__init__()
 
         self.downs = nn.ModuleList([
@@ -125,6 +254,20 @@ class NuClick(nn.Module):
         self.max_pool = nn.MaxPool2d(2)
 
     def forward(self, x):
+        """
+        Predict the mask of a given input x.
+
+        Parameters
+        ----------
+        x : torch tensor
+            The input of the network.
+
+        Return
+        ------
+        output : torch tensor (float)
+            The predicted mask.
+        """
+
         outs = []
 
         for down in self.downs[:-1]:
