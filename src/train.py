@@ -11,12 +11,15 @@ import os
 from argparse import ArgumentParser
 from torch.optim import Adam
 from torch.utils.data import DataLoader
-from torchvision import transforms
 
 from datasets import CytomineDataset
 from losses import Loss
 from model import NuClick
 from utils import convert_time
+
+# Data augmentation
+import augmentation
+from torchvision import transforms
 
 
 # Check if GPU is available
@@ -24,7 +27,8 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 def parse_arguments():
-    """Parse the arguments of the program.
+    """
+    Parse the arguments of the program.
 
     Return
     ------
@@ -109,7 +113,8 @@ def parse_arguments():
 
 
 def train(model, trainloader, criterion, optimizer):
-    """Train the model for one epoch.
+    """
+    Train the model for one epoch.
 
     Parameters
     ----------
@@ -124,7 +129,7 @@ def train(model, trainloader, criterion, optimizer):
 
     Return
     ------
-    losses : python list of floats
+    losses : list of float
         The losses during the training.
     """
 
@@ -148,7 +153,8 @@ def train(model, trainloader, criterion, optimizer):
 
 
 def validate(model, valloader, criterion):
-    """Validate the model for one epoch.
+    """
+    Validate the model for one epoch.
 
     Parameters
     ----------
@@ -161,7 +167,7 @@ def validate(model, valloader, criterion):
 
     Return
     ------
-    losses : python list of floats
+    losses : list of float
         The losses during the validation.
     """
 
@@ -183,7 +189,9 @@ def validate(model, valloader, criterion):
 if __name__ == "__main__":
     args = parse_arguments()
 
-    torch.manual_seed(0)  # Reproducibility
+    # Reproducibility
+    torch.manual_seed(0)
+    np.random.seed(0)
 
     # Statistics
     header = ['epoch', 'train_mean_loss', 'train_std_loss', 'val_mean_loss',
@@ -193,17 +201,29 @@ if __name__ == "__main__":
             writer = csv.DictWriter(file, fieldnames=header)
             writer.writeheader()
 
-    # Transform for images and masks
-    transform = transforms.Compose([
-        transforms.Resize((512, 512)),
-        transforms.ToTensor()
-    ])
+    # Data augmentation
+    transform = augmentation.Transform(
+        transforms=[
+            lambda x, y: (x, y),  # No Transform
+            augmentation.RandomHorizontalFlip(),
+            augmentation.RandomVerticalFlip(),
+        ],
+        input_only=[
+            lambda x: x, # No transform
+            transforms.ColorJitter(
+                brightness=0.33,
+                contrast=0.33,
+                saturation=0.33,
+                hue=0.33
+            ),
+            transforms.GaussianBlur((3, 3))
+        ])
 
     # Build the training and validation set
-    datasets = {x: CytomineDataset(os.path.join(args.path, x), transform)
-                for x in ['train', 'val']}
-    trainloader = DataLoader(datasets['train'], args.batch_size, shuffle=True)
-    valloader = DataLoader(datasets['val'], args.batch_size, shuffle=True)
+    train_data = CytomineDataset(os.path.join(args.path, 'train'), transform)
+    val_data = CytomineDataset(os.path.join(args.path, 'val'))
+    trainloader = DataLoader(train_data, args.batch_size, shuffle=True)
+    valloader = DataLoader(val_data, args.batch_size, shuffle=True)
 
     model = NuClick()
     model = model.to(device)
@@ -266,8 +286,7 @@ if __name__ == "__main__":
                 'optimizer_state_dict': optimizer.state_dict()
             }
 
-            torch.save(state, os.path.join(
-                args.dest, f'{args.type}_checkpoint.pth'))
+            torch.save(state, os.path.join(args.dest, f'{args.type}_checkpoint.pth'))
 
     minutes, seconds = convert_time(total_time)
     print(f"Training complete in {minutes:.0f}m {seconds:.0f}s")

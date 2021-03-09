@@ -14,16 +14,17 @@ from skimage.morphology import (
 
 
 def create_signal(mask):
-    """Create the guiding signal.
+    """
+    Create the guiding signal.
 
     Parameters
     ----------
-    mask : torch tensor
+    mask : Tensor
         The binary mask to transform.
 
     Return
     ------
-    signal : torch tensor
+    signal : Tensor
         The guiding signal.
     """
 
@@ -43,15 +44,16 @@ def create_signal(mask):
     # Apply a morphological skeleton on the new mask
     signal = skeletonize_3d(mask)
 
-    return torch.tensor(signal)
+    return torch.as_tensor(signal)
 
 
 def post_process(preds, threshold=0.5, min_size=10, area_threshold=30):
-    """Post process the predictions.
+    """
+    Post-process the predictions.
 
-    Parameter
-    ---------
-    preds : torch tensor
+    Parameters
+    ----------
+    preds : Tensor
         The predicted masks.
     threshold : float (default=0.5)
         The mininum threshold for the taking the output into account.
@@ -62,12 +64,12 @@ def post_process(preds, threshold=0.5, min_size=10, area_threshold=30):
 
     Return
     ------
-    masks : torch tensor
+    masks : Tensor
         The post-processed predictions.
     """
 
     # Remove small output number
-    masks = preds > threshold
+    masks = (preds > threshold).numpy()
 
     # Remove small objects
     masks = remove_small_objects(masks, min_size=min_size)
@@ -75,4 +77,4 @@ def post_process(preds, threshold=0.5, min_size=10, area_threshold=30):
     # Remove small holes
     masks = remove_small_holes(masks, area_threshold=area_threshold)
 
-    return masks
+    return torch.as_tensor(masks)

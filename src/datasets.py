@@ -8,15 +8,31 @@ import os
 
 from argparse import ArgumentParser
 from PIL import Image
+
 from torch.utils.data.dataset import Dataset
+from torchvision.transforms.functional import to_tensor, resize
 
 from processing import create_signal
 
 
 class CytomineDataset(Dataset):
-    def __init__(self, path, transform=None):
+    """
+    Class representing a dataset from Cytomine.
+
+    Attributes
+    ----------
+    path : str
+        The path to the dataset.
+    transform : Transform (default=None)
+        The transform to apply for data augmentation.
+    dim : tuple (default=(512, 512))
+        The output dimension of the images.
+    """
+
+    def __init__(self, path, transform=None, dim=(512, 512)):
         self.path = path
         self.transform = transform
+        self.dim = dim
 
         # Keep the filename of each image
         self.filenames = os.listdir(os.path.join(path, 'images'))
@@ -41,25 +57,28 @@ class CytomineDataset(Dataset):
         exc_path = os.path.join(self.path, 'exclusions', self.filenames[index])
         exclusion = Image.open(exc_path).convert("L")
 
-        # Apply transform on image and mask
-        if self.transform:
-            image = self.transform(image)
-            mask = self.transform(mask)
-            inclusion = self.transform(inclusion)
-            exclusion = self.transform(exclusion)
+        # Resize to the correct dimension and convert to tensor
+        image = to_tensor(resize(image, self.dim))
+        mask = to_tensor(resize(mask, self.dim))
+        inclusion = to_tensor(resize(inclusion, self.dim))
+        exclusion = to_tensor(resize(exclusion, self.dim))
 
         # Create the inclusion and exclusion map
         inclusion = create_signal(inclusion)
         exclusion = create_signal(exclusion)
 
         # Concatenate the inclusion and exclusion map along the RGB channels
-        image = torch.cat([image, inclusion, exclusion], 0)
+        input = torch.cat([image, inclusion, exclusion], dim=0)
 
-        return image, mask
+        if self.transform:
+            input, mask = self.transform(input, mask)
+
+        return input, mask
 
 
 def parse_arguments():
-    """Parse the arguments of the program. 
+    """
+    Parse the arguments of the program. 
 
     Return
     ------
@@ -68,13 +87,12 @@ def parse_arguments():
     """
 
     parser = ArgumentParser(
-        description="Split test dataset into test/validation set."
+        description="Split dataset into train/validation/test set."
     )
 
     parser.add_argument(
         '--path',
         type=str,
-        default='../../117286674/',
         help="Path to the dataset."
     )
     parser.add_argument(
@@ -99,7 +117,6 @@ if __name__ == "__main__":
     # Get the filenames and the number of images
     filenames = os.listdir(os.path.join(args.path, 'images'))
     n_images = len(filenames)
-    print(n_images)
 
     # Shuffle the images
     if args.shuffle:
