@@ -1,5 +1,5 @@
 """
-NuClick Architecture
+Neural network architecture
 """
 
 import torch
@@ -10,6 +10,19 @@ class ConvBlock(nn.Sequential):
     """
     Class representing a convolutional block.
 
+    Attributes
+    ----------
+    in_channels : int
+        The number of input channels.
+    out_channels : int
+        The number of output channels.
+    kernel_size : int (default=3)
+        The kernel size.
+    padding : int (default=1)
+        The padding rate.
+    dilation : int (default=1)
+        The dilation rate.
+
     Notes
     -----
     A convolutional block is composed of a convolutional layer followed by
@@ -17,24 +30,7 @@ class ConvBlock(nn.Sequential):
     """
 
     def __init__(self, in_channels, out_channels, kernel_size=3, padding=1, dilation=1):
-        """
-        Initialise the class.
-
-        Parameters
-        ----------
-        in_channels : int
-            The number of input channels.
-        out_channels : int
-            The number of output channels.
-        kernel_size : int (default=3)
-            The kernel size.
-        padding : int (default=1)
-            The padding rate.
-        dilation : int (default=1)
-            The dilation rate.
-        """
-
-        super(ConvBlock, self).__init__(
+        super().__init__(
             nn.Conv2d(in_channels, out_channels, kernel_size, padding=padding, dilation=dilation),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True)
@@ -44,6 +40,17 @@ class ConvBlock(nn.Sequential):
 class ResidualBlock(nn.Module):
     """
     Class representing a residual block.
+
+    Attributes
+    ----------
+    in_channels : int
+        The number of input channels.
+    out_channels : int
+        The number of output channels.
+    kernel_size : int (default=3)
+        The kernel size.
+    padding : int (default=1)
+        The padding rate.
 
     Methods
     -------
@@ -57,22 +64,7 @@ class ResidualBlock(nn.Module):
     """
 
     def __init__(self, in_channels, out_channels, kernel_size=3, padding=1):
-        """
-        Initialise the class.
-
-        Parameters
-        ----------
-        in_channels : int
-            The number of input channels.
-        out_channels : int
-            The number of output channels.
-        kernel_size : int (default=3)
-            The kernel size.
-        padding : int (default=1)
-            The padding rate.
-        """
-
-        super(ResidualBlock, self).__init__()
+        super().__init__()
 
         self.increase = in_channels != out_channels
         self.conv1 = ConvBlock(in_channels, out_channels, kernel_size, padding)
@@ -89,12 +81,12 @@ class ResidualBlock(nn.Module):
 
         Parameters
         ----------
-        input : torch tensor
+        input : Tensor
             The input of the block.
 
         Return
         ------
-        output : torch tensor
+        output : Tensor
             The output of the forward pass.
         """
 
@@ -111,6 +103,17 @@ class MultiScaleConvBlock(nn.Module):
     """
     Class representing a multi-scale convolutional block.
 
+    Attributes
+    ----------
+    channel : int
+        The number of output channels.
+    kernel_sizes : list of int
+        The kernel size for each layer.
+    paddings : list of int
+        The padding rates.
+    dilations : list of int
+        The dilations rates.
+
     Methods
     -------
     forward(input)
@@ -124,22 +127,7 @@ class MultiScaleConvBlock(nn.Module):
     """
 
     def __init__(self, channels, kernel_sizes, paddings, dilations):
-        """
-        Initialise the class.
-
-        Parameters
-        ----------
-        channel : int
-            The number of output channels.
-        kernel_sizes : list of int
-            The kernel size for each layer.
-        paddings : list of int
-            The padding rates.
-        dilations : list of int
-            The dilations rates.
-        """
-
-        super(MultiScaleConvBlock, self).__init__()
+        super().__init__()
 
         self.convs = nn.ModuleList(
             [ConvBlock(4 * channels, channels, kernel_sizes[i], paddings[i], dilations[i])
@@ -152,12 +140,12 @@ class MultiScaleConvBlock(nn.Module):
 
         Parameters
         ----------
-        input : torch tensor
+        input : Tensor
             The input of the block.
 
         Return
         ------
-        output : torch tensor
+        output : Tensor
             The output of the forward pass.
         """
         return torch.cat([conv(input) for conv in self.convs], dim=1)
@@ -178,11 +166,7 @@ class NuClick(nn.Module):
     """
 
     def __init__(self):
-        """
-        Initialise the class.
-        """
-
-        super(NuClick, self).__init__()
+        super().__init__()
 
         self.downs = nn.ModuleList([
             nn.Sequential(
@@ -259,12 +243,12 @@ class NuClick(nn.Module):
 
         Parameters
         ----------
-        x : torch tensor
+        x : Tensor
             The input of the network.
 
         Return
         ------
-        output : torch tensor (float)
+        output : Tensor
             The predicted mask.
         """
 

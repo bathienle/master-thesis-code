@@ -8,11 +8,11 @@ import torch.nn as nn
 
 class SoftDiceLoss(nn.Module):
     """
-    Class computing the soft dice loss function.
+    The soft dice loss function.
 
     Attributes
     ----------
-    smooth : float
+    smooth : float (default=1.)
         The smoothing value.
 
     Methods
@@ -21,17 +21,8 @@ class SoftDiceLoss(nn.Module):
         Compute the soft dice loss between the predictions and targets.
     """
 
-    def __init__(self, smooth=1):
-        """
-        Initialise the class.
-
-        Parameters
-        ----------
-        smooth : float (default=1.)
-            The smooting value.
-        """
-
-        super(SoftDiceLoss, self).__init__()
+    def __init__(self, smooth=1.):
+        super().__init__()
 
         self.smooth = smooth
 
@@ -41,9 +32,9 @@ class SoftDiceLoss(nn.Module):
 
         Parameters
         ----------
-        preds : torch tensor
+        preds : Tensor
             The predicted masks.
-        targets : torch tensor
+        targets : Tensor
             The ground-truth masks.
 
         Return
@@ -61,7 +52,7 @@ class SoftDiceLoss(nn.Module):
 
 class Loss(nn.Module):
     """
-    Class computing the loss function of the NuClick model.
+    The loss function of the NuClick model.
 
     Methods
     -------
@@ -70,16 +61,12 @@ class Loss(nn.Module):
 
     Notes
     -----
-    The loss function is a combination of the soft dice loss with a weighted 
+    The loss function is a combination of the soft dice loss with a weighted
     binary cross entropy loss.
     """
 
     def __init__(self):
-        """
-        Initialise the class.
-        """
-
-        super(Loss, self).__init__()
+        super().__init__()
 
         self.dice = SoftDiceLoss()
         self.bce = nn.BCELoss(reduction='none')
@@ -90,9 +77,9 @@ class Loss(nn.Module):
 
         Parameters
         ----------
-        preds : torch tensor
+        preds : Tensor
             The predicted masks.
-        targets : torch tensor
+        targets : Tensor
             The ground-truth masks.
 
         Return
