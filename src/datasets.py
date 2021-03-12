@@ -2,11 +2,9 @@
 Dataset processing
 """
 
-import random
 import torch
 import os
 
-from argparse import ArgumentParser
 from PIL import Image
 
 from torch.utils.data.dataset import Dataset
@@ -74,78 +72,3 @@ class CytomineDataset(Dataset):
             input, mask = self.transform(input, mask)
 
         return input, mask
-
-
-def parse_arguments():
-    """
-    Parse the arguments of the program. 
-
-    Return
-    ------
-    args : class argparse.Namespace
-        The parsed arguments.
-    """
-
-    parser = ArgumentParser(
-        description="Split dataset into train/validation/test set."
-    )
-
-    parser.add_argument(
-        '--path',
-        type=str,
-        help="Path to the dataset."
-    )
-    parser.add_argument(
-        '--ratio',
-        type=float,
-        default=0.8,
-        help="The train/test split ratio of the dataset."
-    )
-    parser.add_argument(
-        '--shuffle',
-        type=bool,
-        default=False,
-        help="Whether to shuffle the test set or not."
-    )
-
-    return parser.parse_args()
-
-
-if __name__ == "__main__":
-    args = parse_arguments()
-
-    # Get the filenames and the number of images
-    filenames = os.listdir(os.path.join(args.path, 'images'))
-    n_images = len(filenames)
-
-    # Shuffle the images
-    if args.shuffle:
-        random.shuffle(filenames)
-
-    # Split the dataset with the ratio
-    split_train_test = round(n_images * args.ratio)
-    split_train_val = round(split_train_test * 0.8)  # Split 80/20
-
-    test_set = filenames[split_train_test:]
-    train_set = filenames[:split_train_test]
-    val_set = train_set[split_train_val:]
-    train_set = train_set[:split_train_val]
-
-    subdirs = ['images', 'masks', 'inclusions', 'exclusions']
-    sets = ['train', 'val', 'test']
-
-    # Create the directories
-    for s in sets:
-        for subdir in subdirs:
-            os.makedirs(os.path.join(args.path, s, subdir), exist_ok=True)
-
-    # Move the images and masks to the destination directory
-    for dataset, name in zip([train_set, val_set, test_set], sets):
-        for filename in dataset:
-            for subdir in subdirs:
-                os.rename(os.path.join(args.path, subdir, filename),
-                          os.path.join(args.path, name, subdir, filename))
-
-    # Delete empty directories
-    for subdir in subdirs:
-        os.rmdir(os.path.join(args.path, subdir))
