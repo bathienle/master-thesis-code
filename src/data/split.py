@@ -6,6 +6,7 @@ import logging
 import os
 
 from argparse import ArgumentParser
+from itertools import chain
 
 from cytomine import Cytomine
 from cytomine.models import (
@@ -98,6 +99,20 @@ if __name__ == '__main__':
         image: labels for image, labels in image_to_label.items() if labels
     }
 
+    # Remove the unexisting or deleted images/annotations
+    filenames = os.listdir(os.path.join(args.path, 'images'))
+    annotations = list(chain.from_iterable(
+        [annotation for annotation in image_to_label.values()]
+    ))
+    annotations = [f'{annotation}.jpg' for annotation in annotations]
+
+    image_to_label = {
+        image: list(
+            set([f'{label}.jpg' for label in labels]).intersection(filenames)
+        )
+        for image, labels in image_to_label.items()
+    }
+
     # Sort the image by the number of annotations
     image_to_label = {
         image: labels for image, labels in
@@ -123,10 +138,6 @@ if __name__ == '__main__':
             train_set.extend(labels)
         else:
             test_set.extend(labels)
-
-    # Create the filenames
-    train_set = [f'{id}.jpg' for id in train_set]
-    test_set = [f'{id}.jpg' for id in test_set]
 
     val_set = train_set[split_train_val:]
     train_set = train_set[:split_train_val]
