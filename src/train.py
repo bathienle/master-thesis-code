@@ -60,27 +60,29 @@ def parse_arguments():
     )
     parser.add_argument(
         '--wd',
-        dest='wd',
         type=float,
         default=5e-5,
         help="The weight decay of the optimizer."
+    )
+    parser.add_argument(
+        '--augmentation',
+        type=bool,
+        default=False,
+        help="Whether to perform data augmentation or not."
     )
 
     # Misc parameters
     parser.add_argument(
         '--type',
-        type=str,
         choices=['gland', 'bronchus', 'tumor'],
         help="The type of object to detect."
     )
     parser.add_argument(
         '--path',
-        type=str,
         help="Path to the dataset."
     )
     parser.add_argument(
         '--dest',
-        type=str,
         default='./',
         help="The path to save the weights of the model."
     )
@@ -91,7 +93,6 @@ def parse_arguments():
         help="Resume the training of the model.")
     parser.add_argument(
         '--checkpoint',
-        type=str,
         default='./checkpoint.pth',
         help="Checkpoint of the state of the training."
     )
@@ -104,7 +105,6 @@ def parse_arguments():
     parser.add_argument(
         '--stat',
         dest='state_path',
-        type=str,
         default='./statistics.csv',
         help="Path to save statistic about training."
     )
@@ -202,22 +202,25 @@ if __name__ == "__main__":
             writer.writeheader()
 
     # Data augmentation
-    transform = augmentation.Transform(
-        transforms=[
-            lambda x, y: (x, y),  # No Transform
-            augmentation.RandomHorizontalFlip(),
-            augmentation.RandomVerticalFlip(),
-        ],
-        input_only=[
-            lambda x: x, # No transform
-            transforms.ColorJitter(
-                brightness=0.33,
-                contrast=0.33,
-                saturation=0.33,
-                hue=0.33
-            ),
-            transforms.GaussianBlur((3, 3))
-        ])
+    if args.augmentation:
+        transform = augmentation.Transform(
+            transforms=[
+                lambda x, y: (x, y),  # No Transform
+                augmentation.RandomHorizontalFlip(),
+                augmentation.RandomVerticalFlip(),
+            ],
+            input_only=[
+                lambda x: x, # No transform
+                transforms.ColorJitter(
+                    brightness=0.33,
+                    contrast=0.33,
+                    saturation=0.33,
+                    hue=0.33
+                ),
+                transforms.GaussianBlur((3, 3))
+            ])
+    else:
+        transform = None
 
     # Build the training and validation set
     train_data = CytomineDataset(os.path.join(args.path, 'train'), transform)
