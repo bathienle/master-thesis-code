@@ -12,7 +12,8 @@ from shapely.affinity import affine_transform
 
 from cytomine import Cytomine
 from cytomine.models import (
-    AnnotationCollection, ImageInstanceCollection, TermCollection
+    AnnotationCollection, ImageInstanceCollection, TermCollection,
+    UserCollection
 )
 
 
@@ -53,6 +54,11 @@ def parse_arguments():
         '--term',
         help="Get specific term annotation."
     )
+    parser.add_argument(
+        '--users',
+        default=None,
+        help="The annotation from these users."
+    )
 
     return parser.parse_args()
 
@@ -75,13 +81,22 @@ if __name__ == '__main__':
     images = ImageInstanceCollection()
     images = images.fetch_with_filter('project', args.project_id)
 
-    # Get the all the annotations of all the images of the project
+    # Get the users of the interested annotations
+    if args.users:
+        query = args.users.split()
+        users = UserCollection().fetch()
+        users = [user.id for user in users if user.username in query]
+    else:
+        users = None
+
+    # Get the annotations from the images of the project
     annotations = AnnotationCollection(
         project=args.project_id,
         term=term_id,
         showWKT=True,
         showMeta=True,
-        showGIS=True
+        showGIS=True,
+        users=users
     )
     annotations.fetch()
 
