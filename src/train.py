@@ -70,6 +70,12 @@ def parse_arguments():
         default=False,
         help="Whether to perform data augmentation or not."
     )
+    parser.add_argument(
+        '--size',
+        type=int,
+        default=0,
+        help="The number of images to use for training."
+    )
 
     # Misc parameters
     parser.add_argument(
@@ -223,7 +229,11 @@ if __name__ == "__main__":
         transform = None
 
     # Build the training and validation set
-    train_data = CytomineDataset(os.path.join(args.path, 'train'), transform)
+    train_data = CytomineDataset(
+        os.path.join(args.path, 'train'),
+        transform=transform,
+        n_image=args.size
+    )
     val_data = CytomineDataset(os.path.join(args.path, 'val'))
     trainloader = DataLoader(train_data, args.batch_size, shuffle=True)
     valloader = DataLoader(val_data, args.batch_size, shuffle=True)

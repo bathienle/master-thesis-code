@@ -25,9 +25,11 @@ class CytomineDataset(Dataset):
         The transform to apply for data augmentation.
     dim : tuple (default=(512, 512))
         The output dimension of the images.
+    n_image : int (default=0)
+        The maximum number of images to use from the dataset.
     """
 
-    def __init__(self, path, transform=None, dim=(512, 512)):
+    def __init__(self, path, transform=None, dim=(512, 512), n_image=0):
         self.path = path
         self.transform = transform
         self.dim = dim
@@ -35,8 +37,12 @@ class CytomineDataset(Dataset):
         # Keep the filename of each image
         self.filenames = os.listdir(os.path.join(path, 'images'))
 
+        # Compute the number of images to work with
+        self.length = n_image if n_image else len(self.filenames)
+        self.length = min(self.length, len(self.filenames))
+
     def __len__(self):
-        return len(self.filenames)
+        return self.length
 
     def __getitem__(self, index):
         # Load the image
