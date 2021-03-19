@@ -8,7 +8,8 @@ from argparse import ArgumentParser
 
 
 def parse_arguments():
-    """Parse the arguments of the program. 
+    """
+    Parse the arguments of the program. 
 
     Return
     ------
@@ -16,24 +17,25 @@ def parse_arguments():
         The parsed arguments.
     """
 
-    parser = ArgumentParser(description="Create a SLURM script.")
+    parser = ArgumentParser(description="Create a SLURM script for training.")
+
+    # Paths
 
     parser.add_argument(
-        '--slurm',
-        default='./',
-        help="Destination path of the output SLURM script."
-    )
-    parser.add_argument(
         '--dest',
-        default='./',
         help="Destination path of the outputs of the run script."
     )
     parser.add_argument(
-        '--type',
-        choices=['gland', 'bronchus', 'tumor'],
-        default='gland',
-        help="Type of object."
+        '--code',
+        help="The path to the source code."
     )
+    parser.add_argument(
+        '--data',
+        help="The path to the dataset."
+    )
+
+    # Training parameters
+
     parser.add_argument(
         '--epoch',
         type=int,
@@ -46,6 +48,15 @@ def parse_arguments():
         default=16,
         help="The batch size."
     )
+    parser.add_argument(
+        '--size',
+        type=int,
+        default=0,
+        help="The number of images to use for training."
+    )
+
+    # SLURM parameters
+
     parser.add_argument(
         '--time',
         default="1-00:00:00",
@@ -69,12 +80,9 @@ def parse_arguments():
         help="The anaconda environment."
     )
     parser.add_argument(
-        '--path',
-        help="The path to the source code."
-    )
-    parser.add_argument(
-        '--data',
-        help="The path to the dataset."
+        '--type',
+        choices=['gland', 'bronchus', 'tumor', 'infiltration', 'inflammation'],
+        help="Type of object."
     )
 
     return parser.parse_args()
@@ -84,16 +92,13 @@ def parse_arguments():
 
 args = parse_arguments()
 
-# Create the paremeters
-filename = f'train-{args.type}.sh'
-job_name = f'tr-{args.type}'
-output = f'train-{args.type}.log'
+# Create the script
 
 HEADER = f"""#!/usr/bin/env bash
 
-#SBATCH --job-name={job_name}
+#SBATCH --job-name={args.bs}-{args.type}
 #SBATCH --export=ALL
-#SBATCH --output={output}
+#SBATCH --output={args.type}.log
 #SBATCH --cpus-per-task={args.task}
 #SBATCH --mem-per-cpu=4G
 #SBATCH --gres=gpu:1
@@ -106,11 +111,11 @@ ENV = f"conda activate {args.env}"
 
 COMMAND = f"""
 
-cd {args.path}
-python3 -u train.py --epochs {args.epoch} --bs {args.bs} --path {args.data} --dest {args.dest} --stat {os.path.join(args.dest, f'{args.type}-statistics.csv')}
+cd {args.code}
+python3 -u train.py --epochs {args.epoch} --bs {args.bs} --size {args.size} --path {args.data} --dest {args.dest} --stat {os.path.join(args.dest, f'{args.type}-statistics.csv')}
 """
 
 script = HEADER + ENV + COMMAND
 
-with open(filename, 'w') as file:
+with open(os.path.join(args.dest, f'train-{args.type}.sh'), 'w') as file:
     file.write(script)
