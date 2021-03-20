@@ -80,7 +80,6 @@ def parse_arguments():
     # Misc parameters
     parser.add_argument(
         '--type',
-        choices=['gland', 'bronchus', 'tumor'],
         help="The type of object to detect."
     )
     parser.add_argument(

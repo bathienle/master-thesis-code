@@ -81,7 +81,6 @@ def parse_arguments():
     )
     parser.add_argument(
         '--type',
-        choices=['gland', 'bronchus', 'tumor', 'infiltration', 'inflammation'],
         help="Type of object."
     )
 
@@ -112,7 +111,7 @@ ENV = f"conda activate {args.env}"
 COMMAND = f"""
 
 cd {args.code}
-python3 -u train.py --epochs {args.epoch} --bs {args.bs} --size {args.size} --path {args.data} --dest {args.dest} --stat {os.path.join(args.dest, f'{args.type}-statistics.csv')}
+python3 -u train.py --epochs {args.epoch} --bs {args.bs} --size {args.size} --path {args.data} --type {args.type} --dest {args.dest} --stat {os.path.join(args.dest, f'{args.type}-statistics.csv')}
 """
 
 script = HEADER + ENV + COMMAND
