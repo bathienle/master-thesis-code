@@ -68,6 +68,10 @@ def post_process(preds, threshold=0.5, min_size=10, area_threshold=30):
         The post-processed predictions.
     """
 
+    # Convert to CPU if needed
+    device = preds.device
+    preds = preds.cpu()
+
     # Remove small output number
     masks = (preds > threshold).numpy()
 
@@ -77,4 +81,4 @@ def post_process(preds, threshold=0.5, min_size=10, area_threshold=30):
     # Remove small holes
     masks = remove_small_holes(masks, area_threshold=area_threshold)
 
-    return torch.as_tensor(masks)
+    return torch.as_tensor(masks, dtype=torch.float32, device=device)
