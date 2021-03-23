@@ -1,5 +1,5 @@
 """
-Create a SLURM script for training
+Create a SLURM script for evaluation
 """
 
 import os
@@ -17,10 +17,11 @@ def parse_arguments():
         The parsed arguments.
     """
 
-    parser = ArgumentParser(description="Create a SLURM script for training.")
+    parser = ArgumentParser(
+        description="Create a SLURM script for evaluation."
+    )
 
     # Paths
-
     parser.add_argument(
         '--dest',
         help="Destination path of the outputs of the run script."
@@ -30,33 +31,15 @@ def parse_arguments():
         help="The path to the source code."
     )
     parser.add_argument(
+        '--weight',
+        help="The path weight of the model to evaluate."
+    )
+    parser.add_argument(
         '--data',
         help="The path to the dataset."
     )
 
-    # Training parameters
-
-    parser.add_argument(
-        '--epoch',
-        type=int,
-        default=100,
-        help="The number of epochs if training."
-    )
-    parser.add_argument(
-        '--bs',
-        type=int,
-        default=16,
-        help="The batch size."
-    )
-    parser.add_argument(
-        '--size',
-        type=int,
-        default=0,
-        help="The number of images to use for training."
-    )
-
     # SLURM parameters
-
     parser.add_argument(
         '--time',
         default="1-00:00:00",
@@ -70,10 +53,12 @@ def parse_arguments():
     )
     parser.add_argument(
         '--partition',
-        choices=['all', 'quadro', 'tesla', 'debug'],
+        choices=['all', 'quadro', 'tesla'],
         default='all',
         help="The partition to use for the program."
     )
+
+    # Project parameters
     parser.add_argument(
         '--env',
         default='thesis',
@@ -95,7 +80,7 @@ args = parse_arguments()
 
 HEADER = f"""#!/usr/bin/env bash
 
-#SBATCH --job-name={args.bs}-{args.type}
+#SBATCH --job-name={args.type}-eval
 #SBATCH --export=ALL
 #SBATCH --output={args.type}.log
 #SBATCH --cpus-per-task={args.task}
@@ -111,10 +96,10 @@ ENV = f"conda activate {args.env}"
 COMMAND = f"""
 
 cd {args.code}
-python3 -u train.py --epochs {args.epoch} --bs {args.bs} --size {args.size} --path {args.data} --type {args.type} --dest {args.dest} --stat {os.path.join(args.dest, f'{args.type}-statistics.csv')}
+python3 -u evaluate.py --data {args.data} --stat {args.dest} --weight {args.weight} --type {args.type}
 """
 
 script = HEADER + ENV + COMMAND
 
-with open(os.path.join(args.dest, f'train-{args.type}.sh'), 'w') as file:
+with open(os.path.join(args.dest, f'evaluate-{args.type}.sh'), 'w') as file:
     file.write(script)
