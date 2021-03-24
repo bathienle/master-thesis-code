@@ -2,6 +2,11 @@
 __pycache__/
 *.pyc
 
+# Python setup
+build/
+dist/
+Thesis.egg-info/
+
 # IDE
 .vscode/
 
