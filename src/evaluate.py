@@ -55,6 +55,12 @@ def parse_arguments():
         default=16,
         help="The batch size."
     )
+    parser.add_argument(
+        '--size',
+        type=int,
+        default=0,
+        help="The number of images used to train the model."
+    )
 
     return parser.parse_args()
 
@@ -102,7 +108,7 @@ if __name__ == "__main__":
 
     # Statistics
     stat_path = os.path.join(args.stat, f'{args.type}-evaluation.csv')
-    header = ['dataset', 'iou', 'dice', 'hausdorff']
+    header = ['dataset', 'size', 'iou', 'dice', 'hausdorff']
     if not os.path.exists(stat_path):
         with open(stat_path, 'w', newline='') as file:
             writer = csv.DictWriter(file, fieldnames=header)
@@ -124,6 +130,7 @@ if __name__ == "__main__":
     with open(stat_path, 'a', newline='') as file:
         csv.writer(file).writerow([
             os.path.basename(os.path.normpath(args.data)),
+            args.size,
             iou,
             dice,
             hausdorff

@@ -38,6 +38,10 @@ def parse_arguments():
         '--data',
         help="The path to the dataset."
     )
+    parser.add_argument(
+        '--stat',
+        help="Path to save statistics about the evaluation."
+    )
 
     # SLURM parameters
     parser.add_argument(
@@ -68,6 +72,11 @@ def parse_arguments():
         '--type',
         help="Type of object."
     )
+    parser.add_argument(
+        '--size',
+        type=int,
+        help="The number of images used to train the model."
+    )
 
     return parser.parse_args()
 
@@ -96,7 +105,7 @@ ENV = f"conda activate {args.env}"
 COMMAND = f"""
 
 cd {args.code}
-python3 -u evaluate.py --data {args.data} --stat {args.dest} --weight {args.weight} --type {args.type}
+python3 -u evaluate.py --data {args.data} --stat {args.stat} --weight {args.weight} --type {args.type} --size {args.size}
 """
 
 script = HEADER + ENV + COMMAND
