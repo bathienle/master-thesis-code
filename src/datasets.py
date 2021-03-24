@@ -10,7 +10,7 @@ from PIL import Image
 from torch.utils.data.dataset import Dataset
 from torchvision.transforms.functional import to_tensor, resize
 
-from processing import create_signal
+from src.processing import create_signal
 
 
 class CytomineDataset(Dataset):
