@@ -215,7 +215,7 @@ if __name__ == "__main__":
                 augmentation.RandomVerticalFlip(),
             ],
             input_only=[
-                lambda x: x, # No transform
+                lambda x: x,  # No transform
                 transforms.ColorJitter(
                     brightness=0.33,
                     contrast=0.33,
@@ -255,11 +255,11 @@ if __name__ == "__main__":
 
     total_time = 0.0
 
+    print(" epoch   train_loss    val_loss        time")
+    print("------  -----------  ----------  ----------")
+
     # Training the model
     for epoch in range(start_epoch, args.epochs):
-        print(f"Epoch {epoch+1}/{args.epochs}")
-        print('-' * 10)
-
         start_time = time.time()
 
         # Train the model for one epoch
@@ -267,12 +267,6 @@ if __name__ == "__main__":
 
         # Perform the validation test on the model
         val_losses = validate(model, valloader, criterion)
-
-        # Loss
-        training_loss = sum(train_losses) / len(trainloader.dataset)
-        validation_loss = sum(val_losses) / len(valloader.dataset)
-        print(f"Training loss: {training_loss:.4f}",
-              f"Validation loss: {validation_loss:.4f}")
 
         # Statistics
         with open(args.state_path, 'a', newline='') as file:
@@ -287,8 +281,14 @@ if __name__ == "__main__":
         # Compute the time taken for one epoch
         elapsed_time = time.time() - start_time
         minutes, seconds = convert_time(elapsed_time)
-        print(f"{minutes:.0f}m {seconds:.0f}s")
         total_time += elapsed_time
+
+        print(
+            f"{epoch:>6}", ' ',
+            f"{np.mean(train_losses):>10.4f} ",
+            f"{np.mean(val_losses):>10.4f}", ' ',
+            f"{minutes:>5.0f}m{seconds:.0f}s"
+        )
 
         # Checkpoint save
         if epoch % args.step:
@@ -298,13 +298,19 @@ if __name__ == "__main__":
                 'optimizer_state_dict': optimizer.state_dict()
             }
 
-            torch.save(state, os.path.join(args.dest, f'{args.type}_checkpoint.pth'))
+            torch.save(
+                state,
+                os.path.join(args.dest, f'{args.type}_checkpoint.pth')
+            )
 
     minutes, seconds = convert_time(total_time)
     print(f"Training complete in {minutes:.0f}m {seconds:.0f}s")
 
     # Save the trained model
-    torch.save(model.state_dict(), os.path.join(args.dest, f'{args.type}_model.pth'))
+    torch.save(
+        model.state_dict(),
+        os.path.join(args.dest, f'{args.type}_model.pth')
+    )
 
     # Save the training state for further training
     state = {
