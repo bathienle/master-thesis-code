@@ -12,9 +12,7 @@ from skimage.color import label2rgb
 from torchvision.transforms.functional import to_tensor
 
 from drawing import Painter
-from src.model import NuClick
-from src.processing import create_signal, post_process
-from src.utils import get_image_path, to_uint8
+from src import NuClick, create_signal, post_process, get_image_path, to_uint8
 
 
 # Check if GPU is available
@@ -54,7 +52,7 @@ def get_patches(image, squiggles, signal, dim=(512, 512)):
     ----------
     image : numpy array of shape (h, w, 3)
         The complete image.
-    squiggles : list of coordinates 
+    squiggles : list of coordinates
         The squiggles coordinates done by the user.
     signal : numpy array of shape (h, w)
         The complete drawing of the user.
@@ -130,8 +128,11 @@ def merge_masks(shape, masks, offsets):
     mask = torch.zeros((height, width), dtype=torch.uint8)
 
     for m, offset in zip(masks, offsets):
+        h, w = m.shape[1:]
         x, y = offset
-        mask[y:y+height, x:x+width] |= m.squeeze().type(torch.uint8)
+
+        # Merge the sub masks
+        mask[y:y+h, x:x+w] |= m.squeeze().type(torch.uint8)
 
     return mask.type(torch.float32)
 
