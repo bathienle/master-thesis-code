@@ -2,6 +2,7 @@
 Split the dataset into train/val/test sets from a Cytomine dataset.
 """
 
+import csv
 import logging
 import os
 
@@ -10,7 +11,8 @@ from itertools import chain
 
 from cytomine import Cytomine
 from cytomine.models import (
-    AnnotationCollection, ImageInstanceCollection, TermCollection
+    AnnotationCollection, ImageInstanceCollection, TermCollection,
+    UserCollection
 )
 
 
@@ -65,8 +67,6 @@ def parse_arguments():
 if __name__ == '__main__':
     args = parse_arguments()
 
-    base_path = os.path.join(args.path, str(args.project_id))
-
     # Connect to Cytomine
     Cytomine(args.host, args.public_key, args.private_key, logging.INFO)
 
@@ -76,9 +76,14 @@ if __name__ == '__main__':
         (term.id for term in terms if term.name.lower() == args.term.lower())
     )
 
+    # Get the users of Cytomine
+    users = UserCollection().fetch()
+    users = {user.id: user.username for user in users}
+
     # Get all images of a Cytomine project
     images = ImageInstanceCollection()
     images = images.fetch_with_filter('project', args.project_id)
+    id_to_images = {image.id: image for image in images}
 
     # Get the all the annotations of all the images of the project
     annotations = AnnotationCollection(
@@ -87,6 +92,9 @@ if __name__ == '__main__':
         showMeta=True,
     )
     annotations.fetch()
+    id_to_annotations = {
+        annotation.id: annotation for annotation in annotations
+    }
 
     # Map the annotations to the corresponding image
     image_to_label = {
@@ -141,6 +149,34 @@ if __name__ == '__main__':
 
     val_set = train_set[split_train_val:]
     train_set = train_set[:split_train_val]
+
+    # Save details about the split into a CSV file
+    detail_path = os.path.join(args.path, f'details-{args.project_id}.csv')
+    header = ['Annotation ID', 'Image ID', 'Image filename', 'Term', 'User',
+              'Category']
+    with open(detail_path, 'w', newline='') as file:
+        writer = csv.DictWriter(file, fieldnames=header)
+        writer.writeheader()
+
+        # Write the information of each set
+        pair = zip(
+            ['train', 'validation', 'test'],
+            [train_set, val_set, test_set]
+        )
+        for category, s in pair:
+            for filename in s:
+                annotation_id = int(filename[:-4])
+                annotation = id_to_annotations[annotation_id]
+                image = id_to_images[annotation.image]
+
+                csv.writer(file).writerow([
+                    annotation_id,
+                    annotation.image,
+                    image.filename,
+                    args.term,
+                    users[annotation.user],
+                    category
+                ])
 
     # Split the annotations to the corresponding directories
     subdirs = ['images', 'masks', 'inclusions', 'exclusions']
