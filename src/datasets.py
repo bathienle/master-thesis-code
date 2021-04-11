@@ -78,3 +78,70 @@ class CytomineDataset(Dataset):
             input, mask = self.transform(input, mask)
 
         return input, mask
+
+
+class CrossValidationDataset(Dataset):
+    """
+    Class representing a dataset for the cross-validation.
+
+    Attributes
+    ----------
+    paths : list of str
+        A list of paths.
+    dim : tuple (default=(512, 512))
+        The output dimension of the images.
+    """
+
+    def __init__(self, paths, dim=(512, 512)):
+        self.paths = paths
+        self.dim = dim
+
+        self.filenames = []
+        # Get all the absolute path of the filenames
+        for base_path in paths:
+            path = os.path.join(base_path, 'images')
+            filenames = [
+                os.path.join(path, filename) for filename in os.listdir(path)
+            ]
+            self.filenames.extend(filenames)
+
+    def __len__(self):
+        return len(self.filenames)
+
+    def __getitem__(self, index):
+        absolute_path = self.filenames[index]
+
+        # Split the directory path and the filename of the image
+        path = os.path.dirname(os.path.dirname(absolute_path))
+        filename = os.path.basename(absolute_path)
+
+        # Load the image
+        image_path = os.path.join(path, 'images', filename)
+        image = Image.open(image_path)
+
+        # Load the mask
+        mask_path = os.path.join(path, 'masks', filename)
+        mask = Image.open(mask_path).convert("L")
+
+        # Load the pseudo inclusion map
+        inc_path = os.path.join(path, 'inclusions', filename)
+        inclusion = Image.open(inc_path).convert("L")
+
+        # Load the pseudo exclusion map
+        exc_path = os.path.join(path, 'exclusions', filename)
+        exclusion = Image.open(exc_path).convert("L")
+
+        # Resize to the correct dimension and convert to tensor
+        image = to_tensor(resize(image, self.dim))
+        mask = to_tensor(resize(mask, self.dim))
+        inclusion = to_tensor(resize(inclusion, self.dim))
+        exclusion = to_tensor(resize(exclusion, self.dim))
+
+        # Create the inclusion and exclusion map
+        inclusion = create_signal(inclusion)
+        exclusion = create_signal(exclusion)
+
+        # Concatenate the inclusion and exclusion map along the RGB channels
+        input = torch.cat([image, inclusion, exclusion], dim=0)
+
+        return input, mask
