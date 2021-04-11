@@ -98,7 +98,6 @@ def parse_arguments():
         help="Resume the training of the model.")
     parser.add_argument(
         '--checkpoint',
-        default='./checkpoint.pth',
         help="Checkpoint of the state of the training."
     )
     parser.add_argument(
@@ -291,7 +290,7 @@ if __name__ == "__main__":
         )
 
         # Checkpoint save
-        if epoch % args.step:
+        if epoch % args.step and args.checkpoint:
             state = {
                 'epoch': epoch,
                 'model_state_dict': model.state_dict(),
@@ -313,10 +312,14 @@ if __name__ == "__main__":
     )
 
     # Save the training state for further training
-    state = {
-        'epoch': epoch,
-        'model_state_dict': model.state_dict(),
-        'optimizer_state_dict': optimizer.state_dict()
-    }
+    if args.checkpoint:
+        state = {
+            'epoch': epoch,
+            'model_state_dict': model.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict()
+        }
 
-    torch.save(state, os.path.join(args.dest, f'{args.type}_checkpoint.pth'))
+        torch.save(
+            state,
+            os.path.join(args.dest, f'{args.type}_checkpoint.pth')
+        )
