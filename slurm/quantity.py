@@ -7,6 +7,8 @@ import os
 
 from argparse import ArgumentParser
 
+from src import str2bool
+
 
 def parse_arguments():
     """
@@ -36,7 +38,7 @@ def parse_arguments():
     )
     parser.add_argument(
         '--shuffle',
-        type=bool,
+        type=str2bool,
         default=True,
         help="Whether to shuffle the training images or not."
     )

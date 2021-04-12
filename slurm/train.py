@@ -6,6 +6,8 @@ import os
 
 from argparse import ArgumentParser
 
+from src import str2bool
+
 
 def parse_arguments():
     """
@@ -52,6 +54,12 @@ def parse_arguments():
         default=0,
         help="The number of images to use for training."
     )
+    parser.add_argument(
+        '--shuffle',
+        type=str2bool,
+        default=True,
+        help="Whether to shuffle the training images or not."
+    )
 
     # SLURM parameters
     parser.add_argument(
@@ -84,34 +92,31 @@ def parse_arguments():
     return parser.parse_args()
 
 
-# Main
+if __name__ == "__main__":
+    args = parse_arguments()
 
-args = parse_arguments()
+    # Create the header of the script
+    HEADER = "#!/usr/bin/env bash\n\n"\
+        f"#SBATCH --job-name={args.bs}-{args.type}\n"\
+        "#SBATCH --export=ALL\n"\
+        f"#SBATCH --output={args.type}.log\n"\
+        f"#SBATCH --cpus-per-task={args.task}\n"\
+        "#SBATCH --mem-per-cpu=4G\n"\
+        "#SBATCH --gres=gpu:1\n"\
+        f"#SBATCH --time={args.time}\n"\
+        f"#SBATCH --partition={args.partition}\n\n"\
 
-# Create the script
+    # Create the environment command
+    ENV = f"conda activate {args.env}\n\n"
 
-HEADER = f"""#!/usr/bin/env bash
+    # Create the command to perform
+    COMMAND = f"cd {args.code}\n"\
+        f"python3 -u train.py --epochs {args.epoch} --bs {args.bs} "\
+        f"--size {args.size} --data {args.data} --type {args.type} "\
+        f"--dest {args.dest} --shuffle {args.shuffle} "\
+        f"--stat {os.path.join(args.dest, f'{args.type}-statistics.csv')}"
 
-#SBATCH --job-name={args.bs}-{args.type}
-#SBATCH --export=ALL
-#SBATCH --output={args.type}.log
-#SBATCH --cpus-per-task={args.task}
-#SBATCH --mem-per-cpu=4G
-#SBATCH --gres=gpu:1
-#SBATCH --time={args.time}
-#SBATCH --partition={args.partition}
+    script = HEADER + ENV + COMMAND
 
-"""
-
-ENV = f"conda activate {args.env}"
-
-COMMAND = f"""
-
-cd {args.code}
-python3 -u train.py --epochs {args.epoch} --bs {args.bs} --size {args.size} --path {args.data} --type {args.type} --dest {args.dest} --stat {os.path.join(args.dest, f'{args.type}-statistics.csv')}
-"""
-
-script = HEADER + ENV + COMMAND
-
-with open(os.path.join(args.dest, f'train-{args.type}.sh'), 'w') as file:
-    file.write(script)
+    with open(os.path.join(args.dest, f'train-{args.type}.sh'), 'w') as file:
+        file.write(script)
