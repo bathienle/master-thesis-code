@@ -15,7 +15,7 @@ from torch.utils.data import DataLoader
 from datasets import CytomineDataset
 from losses import Loss
 from model import NuClick
-from utils import convert_time
+from utils import convert_time, str2bool
 
 # Data augmentation
 import augmentation
@@ -41,7 +41,7 @@ def parse_arguments():
     # Training parameters
     parser.add_argument(
         '--shuffle',
-        type=bool,
+        type=str2bool,
         default=True,
         help="Whether to shuffle the training images or not."
     )
