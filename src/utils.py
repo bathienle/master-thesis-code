@@ -9,6 +9,31 @@ from tkinter import Tk
 from tkinter.filedialog import askopenfilename
 
 
+def str2bool(value):
+    """
+    Convert a string boolean to a boolean value.
+
+    Parameters
+    ----------
+    value : str or bool
+        The value to convert.
+
+    Return
+    ------
+    value : bool
+        The string converted into a boolean value.
+    """
+
+    if isinstance(value, bool):
+        return value
+    elif value.lower() == 'true':
+        return True
+    elif value.lower() == 'false':
+        return False
+    else:
+        return False
+
+
 def to_uint8(array):
     """
     Convert an array of value in range [0, 1] to range [0, 255].

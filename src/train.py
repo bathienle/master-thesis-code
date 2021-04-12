@@ -40,6 +40,12 @@ def parse_arguments():
 
     # Training parameters
     parser.add_argument(
+        '--shuffle',
+        type=bool,
+        default=True,
+        help="Whether to shuffle the training images or not."
+    )
+    parser.add_argument(
         '--epochs',
         type=int,
         default=15,
@@ -83,7 +89,7 @@ def parse_arguments():
         help="The type of object to detect."
     )
     parser.add_argument(
-        '--path',
+        '--data',
         help="Path to the dataset."
     )
     parser.add_argument(
@@ -228,13 +234,13 @@ if __name__ == "__main__":
 
     # Build the training and validation set
     train_data = CytomineDataset(
-        os.path.join(args.path, 'train'),
+        os.path.join(args.data, 'train'),
         transform=transform,
         n_image=args.size
     )
-    val_data = CytomineDataset(os.path.join(args.path, 'val'))
-    trainloader = DataLoader(train_data, args.batch_size, shuffle=True)
-    valloader = DataLoader(val_data, args.batch_size, shuffle=True)
+    val_data = CytomineDataset(os.path.join(args.data, 'val'))
+    trainloader = DataLoader(train_data, args.batch_size, shuffle=args.shuffle)
+    valloader = DataLoader(val_data, args.batch_size, shuffle=args.shuffle)
 
     model = NuClick()
     model = model.to(device)
