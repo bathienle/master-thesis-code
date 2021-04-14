@@ -50,7 +50,7 @@ def to_uint8(array):
     """
 
     if isinstance(array, torch.Tensor):
-        return (array * 255).type(torch.uint8).permute(1, 2, 0).numpy()
+        return (array * 255).type(torch.uint8).numpy()
 
     if isinstance(array, np.ndarray):
         return (array * 255).astype(np.uint8)
