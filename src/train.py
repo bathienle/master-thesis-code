@@ -205,7 +205,7 @@ if __name__ == "__main__":
 
     # Statistics
     header = ['epoch', 'train_mean_loss', 'train_std_loss', 'val_mean_loss',
-              'val_std_loss']
+              'val_std_loss', 'duration']
     if not os.path.exists(args.state_path):
         with open(args.state_path, 'w', newline='') as file:
             writer = csv.DictWriter(file, fieldnames=header)
@@ -260,9 +260,6 @@ if __name__ == "__main__":
 
     total_time = 0.0
 
-    print(" epoch   train_loss    val_loss        time")
-    print("------  -----------  ----------  ----------")
-
     # Training the model
     for epoch in range(start_epoch, args.epochs):
         start_time = time.time()
@@ -273,6 +270,11 @@ if __name__ == "__main__":
         # Perform the validation test on the model
         val_losses = validate(model, valloader, criterion)
 
+        # Compute the time taken for one epoch
+        elapsed_time = time.time() - start_time
+        minutes, seconds = convert_time(elapsed_time)
+        total_time += elapsed_time
+
         # Statistics
         with open(args.state_path, 'a', newline='') as file:
             csv.writer(file).writerow([
@@ -280,20 +282,9 @@ if __name__ == "__main__":
                 np.mean(train_losses),
                 np.std(train_losses),
                 np.mean(val_losses),
-                np.std(val_losses)
+                np.std(val_losses),
+                f"{minutes:.0f}m{seconds:.0f}s"
             ])
-
-        # Compute the time taken for one epoch
-        elapsed_time = time.time() - start_time
-        minutes, seconds = convert_time(elapsed_time)
-        total_time += elapsed_time
-
-        print(
-            f"{epoch:>6}", ' ',
-            f"{np.mean(train_losses):>10.4f} ",
-            f"{np.mean(val_losses):>10.4f}", ' ',
-            f"{minutes:>5.0f}m{seconds:.0f}s"
-        )
 
         # Checkpoint save
         if epoch % args.step and args.checkpoint:
