@@ -114,7 +114,7 @@ if __name__ == "__main__":
         f"python3 -u train.py --epochs {args.epoch} --bs {args.bs} "\
         f"--size {args.size} --data {args.data} --type {args.type} "\
         f"--dest {args.dest} --shuffle {args.shuffle} "\
-        f"--stat {os.path.join(args.dest, f'{args.type}-statistics.csv')}"
+        f"--stat {os.path.join(args.dest, f'{args.type}-statistics.csv')}\n"
 
     script = HEADER + ENV + COMMAND
 
