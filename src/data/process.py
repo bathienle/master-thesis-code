@@ -2,12 +2,12 @@
 Clean and process the dataset.
 """
 
-import cv2
 import numpy as np
 import shutil
 import os
 
 from argparse import ArgumentParser
+from PIL import Image
 
 
 def parse_arguments():
@@ -42,10 +42,7 @@ if __name__ == "__main__":
     filenames = os.listdir(image_path)
 
     for filename in filenames:
-        mask = cv2.imread(
-            os.path.join(mask_path, filename),
-            cv2.IMREAD_GRAYSCALE
-        )
+        mask = Image.open(os.path.join(mask_path, filename)).convert("L")
 
         # If no mask then remove this image
         if not os.path.exists(os.path.join(mask_path, filename)):
@@ -59,8 +56,7 @@ if __name__ == "__main__":
             continue
 
         # Case 1: the target mask is completely white
-
-        n_pixel = mask.shape[0] * mask.shape[1]
+        n_pixel = mask.height * mask.width
         nonzero = np.count_nonzero(mask)
 
         # If the mask is completely white
@@ -74,17 +70,13 @@ if __name__ == "__main__":
             )
 
             # There will be no exclusion map
-            cv2.imwrite(
-                os.path.join(exclusion_path, filename),
-                np.zeros(mask.shape, dtype=mask.dtype)
-            )
+            shape = (mask.height, mask.width)
+            exclusion = Image.fromarray(np.zeros(shape, dtype=np.uint8))
+            exclusion.save(os.path.join(exclusion_path, filename))
 
         # Case 2: the inclusion mask is completely dark
-
-        inclusion = cv2.imread(
-            os.path.join(inclusion_path, filename),
-            cv2.IMREAD_GRAYSCALE
-        )
+        path = os.path.join(inclusion_path, filename)
+        inclusion = Image.open(path).convert('L')
 
         # If the inclusion map is completely dark
         if not np.count_nonzero(inclusion):
