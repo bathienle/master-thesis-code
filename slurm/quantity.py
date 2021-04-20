@@ -49,8 +49,14 @@ def parse_arguments():
         help="Percentage of the dataset."
     )
     parser.add_argument(
+        '--epoch',
+        type=int,
+        default=300,
+        help="Number of epoch to train the models."
+    )
+    parser.add_argument(
         '--time',
-        default="1-00:00:00",
+        default="14-00:00:00",
         help="The maximal time to run this script."
     )
 
@@ -78,8 +84,17 @@ if __name__ == "__main__":
         # Create the SLURM script for this specific training
         code = os.path.abspath("../src/")
         command = f"python3 train.py --dest {path} --code {code}"\
-            f" --data {args.data} --epoch 300 --size {n_images}"\
+            f" --data {args.data} --epoch {args.epoch} --size {n_images}"\
             f" --time {args.time} --partition tesla --type {args.type}"\
             f" --shuffle {args.shuffle}"
+
+        os.system(command)
+
+        # Create the SLURM script for the evaluation
+        weight_path = os.path.join(path, f"{args.type}_model.pth")
+        command = f"python3 eval.py --dest {path} --code {code}"\
+            f" --data {args.data} --weight {weight_path} --size {n_images}"\
+            f" --time {args.time} --partition all --type {args.type}"\
+            f" --stat {args.dest}\n"
 
         os.system(command)

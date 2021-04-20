@@ -46,7 +46,7 @@ def parse_arguments():
     # SLURM parameters
     parser.add_argument(
         '--time',
-        default="1-00:00:00",
+        default="14-00:00:00",
         help="The maximal time to run this script."
     )
     parser.add_argument(
@@ -57,7 +57,6 @@ def parse_arguments():
     )
     parser.add_argument(
         '--partition',
-        choices=['all', 'quadro', 'tesla'],
         default='all',
         help="The partition to use for the program."
     )
@@ -81,34 +80,27 @@ def parse_arguments():
     return parser.parse_args()
 
 
-# Main
+if __name__ == "__main__":
+    args = parse_arguments()
 
-args = parse_arguments()
+    # Create the header of the script
+    HEADER = "#!/usr/bin/env bash\n\n"\
+        f"#SBATCH --job-name={args.type}-eval\n"\
+        "#SBATCH --export=ALL\n"\
+        f"#SBATCH --output={args.type}-eval.log\n"\
+        f"#SBATCH --cpus-per-task={args.task}\n"\
+        "#SBATCH --mem-per-cpu=4G\n"\
+        "#SBATCH --gres=gpu:1\n"\
+        f"#SBATCH --time={args.time}\n"\
+        f"#SBATCH --partition={args.partition}\n\n"\
 
-# Create the script
+    ENV = f"conda activate {args.env}\n\n"
 
-HEADER = f"""#!/usr/bin/env bash
+    COMMAND = f"cd {args.code}\n"\
+        f"python3 -u evaluate.py --data {args.data} --stat {args.stat} "\
+        f"--weight {args.weight} --type {args.type} --size {args.size}\n"
 
-#SBATCH --job-name={args.type}-eval
-#SBATCH --export=ALL
-#SBATCH --output={args.type}.log
-#SBATCH --cpus-per-task={args.task}
-#SBATCH --mem-per-cpu=4G
-#SBATCH --gres=gpu:1
-#SBATCH --time={args.time}
-#SBATCH --partition={args.partition}
+    script = HEADER + ENV + COMMAND
 
-"""
-
-ENV = f"conda activate {args.env}"
-
-COMMAND = f"""
-
-cd {args.code}
-python3 -u evaluate.py --data {args.data} --stat {args.stat} --weight {args.weight} --type {args.type} --size {args.size}
-"""
-
-script = HEADER + ENV + COMMAND
-
-with open(os.path.join(args.dest, f'evaluate-{args.type}.sh'), 'w') as file:
-    file.write(script)
+    with open(os.path.join(args.dest, f'eval-{args.type}.sh'), 'w') as file:
+        file.write(script)
