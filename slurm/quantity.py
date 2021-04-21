@@ -43,7 +43,7 @@ def parse_arguments():
         help="Whether to shuffle the training images or not."
     )
     parser.add_argument(
-        '--step',
+        '--ratio',
         type=float,
         default=0.1,
         help="Percentage of the dataset."
@@ -70,10 +70,8 @@ if __name__ == "__main__":
     n_images = len(os.listdir(os.path.join(args.data, 'train', 'images')))
 
     # Split the training images
-    split = np.append(
-        np.arange(1, n_images, np.floor(n_images * args.step), dtype=int),
-        n_images
-    )
+    step = int(n_images * args.ratio)
+    split = np.linspace(1, n_images, n_images // step, dtype=int)
 
     # Create the script for a growing number of training images
     for index, n_images in enumerate(split):
