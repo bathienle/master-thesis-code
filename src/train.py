@@ -122,9 +122,9 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def train(model, trainloader, criterion, optimizer):
+def train(model, trainloader, criterion, optimizer, batch_size):
     """
-    Train the model for one epoch.
+    Train the model for one epoch using gradient accumulation technique.
 
     Parameters
     ----------
@@ -136,6 +136,8 @@ def train(model, trainloader, criterion, optimizer):
         The loss function.
     optimizer : torch optimizer
         The optimizer.
+    batch_size : int
+        The real batch size.
 
     Return
     ------
@@ -146,18 +148,20 @@ def train(model, trainloader, criterion, optimizer):
     model.train()
     losses = []
 
-    for inputs, targets in trainloader:
+    for index, (inputs, targets) in enumerate(trainloader):
         inputs, targets = inputs.to(device), targets.to(device)
 
         predictions = model(inputs)
 
         loss = criterion(predictions, targets)
 
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+        (loss / batch_size).backward()
 
         losses.append(loss.item() * inputs.size(0))
+
+        if (index + 1) % batch_size == 0:
+            optimizer.step()
+            optimizer.zero_grad()
 
     return losses
 
@@ -239,7 +243,7 @@ if __name__ == "__main__":
         n_image=args.size
     )
     val_data = CytomineDataset(os.path.join(args.data, 'val'))
-    trainloader = DataLoader(train_data, args.batch_size, shuffle=args.shuffle)
+    trainloader = DataLoader(train_data, 4, shuffle=args.shuffle)
     valloader = DataLoader(val_data, args.batch_size, shuffle=args.shuffle)
 
     model = NuClick()
@@ -265,7 +269,9 @@ if __name__ == "__main__":
         start_time = time.time()
 
         # Train the model for one epoch
-        train_losses = train(model, trainloader, criterion, optimizer)
+        train_losses = train(
+            model, trainloader, criterion, optimizer, args.batch_size
+        )
 
         # Perform the validation test on the model
         val_losses = validate(model, valloader, criterion)
