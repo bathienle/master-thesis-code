@@ -3,6 +3,7 @@ Plot functions
 """
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 
 from argparse import ArgumentParser
@@ -52,10 +53,14 @@ def plot_quantity_analysis(filename, df):
     # Plot the training and validation losses
     plt.plot(df['size'], df['iou'])
     plt.plot(df['size'], df['dice'])
-    plt.legend(['IoU', 'Dice'], loc='best')
+    plt.legend(['IoU', 'Dice'], loc='lower left')
 
     # Set proper limit
-    plt.xlim(left=0)
+    xticks = np.arange(0, df['size'].iloc[-1], 50, dtype=int)
+    xticks[0] = 1
+
+    plt.xticks(xticks)
+    plt.xlim(left=1)
     plt.ylim([0, 1])
 
     # Save the figure
@@ -75,8 +80,11 @@ def plot_hausdorff(filename, df):
     plt.plot(df['size'], df['hausdorff'])
 
     # Set proper limit
-    plt.xlim(left=0)
-    # plt.ylim([0, 1])
+    xticks = np.arange(0, df['size'].iloc[-1], 50, dtype=int)
+    xticks[0] = 1
+
+    plt.xticks(xticks)
+    plt.xlim(left=1)
 
     # Save the figure
     plt.savefig('haus-' + filename, bbox_inches='tight')
