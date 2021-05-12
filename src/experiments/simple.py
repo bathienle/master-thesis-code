@@ -1,5 +1,5 @@
 """
-Training without inclusion and exclusion map
+Training without inclusion and exclusion map or train with U-Net model
 """
 
 import csv
@@ -13,7 +13,7 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader
 
 from src import (
-    NuClick, TestDataset, Loss, convert_time, str2bool
+    NuClick, UNet, TestDataset, Loss, convert_time, str2bool
 )
 
 
@@ -64,6 +64,11 @@ def parse_arguments():
         type=float,
         default=5e-5,
         help="The weight decay of the optimizer."
+    )
+    parser.add_argument(
+        '--model',
+        default="nuclick",
+        help="The model to use."
     )
 
     # Misc parameters
@@ -202,7 +207,11 @@ if __name__ == "__main__":
     trainloader = DataLoader(train_data, args.batch_size, shuffle=args.shuffle)
     valloader = DataLoader(val_data, args.batch_size, shuffle=args.shuffle)
 
-    model = NuClick(in_channels=3)
+    if args.model == "nuclick":
+        model = NuClick(in_channels=3)
+    elif args.model == "unet":
+        model = UNet()
+
     model = model.to(device)
 
     optimizer = Adam(model.parameters(), args.lr, weight_decay=args.wd)

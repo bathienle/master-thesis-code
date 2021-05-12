@@ -129,10 +129,10 @@ class MultiScaleConvBlock(nn.Module):
     def __init__(self, channels, kernel_sizes, paddings, dilations):
         super().__init__()
 
-        self.convs = nn.ModuleList(
-            [ConvBlock(4 * channels, channels, kernel_sizes[i], paddings[i], dilations[i])
-             for i in range(4)]
-        )
+        self.convs = nn.ModuleList([
+            ConvBlock(4 * channels, channels, kernel_sizes[i], paddings[i], dilations[i])
+             for i in range(4)
+        ])
 
     def forward(self, input):
         """
@@ -168,7 +168,7 @@ class NuClick(nn.Module):
     def __init__(self, in_channels=5):
         super().__init__()
 
-        self.downs = nn.ModuleList([
+        self.contractions = nn.ModuleList([
             nn.Sequential(
                 ConvBlock(in_channels, 64, 7, 3),
                 ConvBlock(64, 32, 5, 2),
@@ -192,15 +192,16 @@ class NuClick(nn.Module):
                 ResidualBlock(256, 512),
                 ResidualBlock(512, 512),
                 ResidualBlock(512, 512)
-            ),
-            nn.Sequential(
-                ResidualBlock(512, 1024),
-                ResidualBlock(1024, 1024),
-                nn.ConvTranspose2d(1024, 512, 2, 2)
             )
         ])
 
-        self.ups = nn.ModuleList([
+        self.middle = nn.Sequential(
+            ResidualBlock(512, 1024),
+            ResidualBlock(1024, 1024),
+            nn.ConvTranspose2d(1024, 512, 2, 2)
+        )
+
+        self.expansions = nn.ModuleList([
             nn.Sequential(
                 ResidualBlock(1024, 512),
                 ResidualBlock(512, 256),
@@ -254,15 +255,113 @@ class NuClick(nn.Module):
 
         outs = []
 
-        for down in self.downs[:-1]:
-            x = down(x)
+        for contract in self.contractions:
+            x = contract(x)
             outs.append(x)
             x = self.max_pool(x)
 
-        x = self.downs[-1](x)
+        x = self.middle(x)
 
-        for up in self.ups:
-            x = torch.cat([x, outs.pop()], 1)
-            x = up(x)
+        for expand in self.expansions:
+            x = torch.cat([x, outs.pop()], dim=1)
+            x = expand(x)
+
+        return self.head(x)
+
+
+class UNet(nn.Module):
+    """
+    Class representing the U-Net neural network architecture.
+
+    Methods
+    -------
+    forward(x)
+        Predict the segmentation mask of an image.
+
+    Notes
+    -----
+    Reference paper: https://arxiv.org/pdf/1505.04597.pdf
+    """
+
+    def __init__(self, in_channels=3, n_classes=1):
+        super().__init__()
+
+        self.contractions = nn.ModuleList([
+            nn.Sequential(
+                ConvBlock(in_channels, 64),
+                ConvBlock(64, 64),
+            ),
+            nn.Sequential(
+                ConvBlock(64, 128),
+                ConvBlock(128, 128),
+            ),
+            nn.Sequential(
+                ConvBlock(128, 256),
+                ConvBlock(256, 256),
+            ),
+            nn.Sequential(
+                ConvBlock(256, 512),
+                ConvBlock(512, 512),
+            )
+        ])
+
+        self.middle = nn.Sequential(
+            ConvBlock(512, 1024),
+            nn.ConvTranspose2d(1024, 512, 2, 2)
+        )
+
+        self.expansions = nn.ModuleList([
+            nn.Sequential(
+                ConvBlock(1024, 512),
+                ConvBlock(512, 512),
+                nn.ConvTranspose2d(512, 256, 2, 2)
+            ),
+            nn.Sequential(
+                ConvBlock(512, 256),
+                ConvBlock(256, 256),
+                nn.ConvTranspose2d(256, 128, 2, 2)
+            ),
+            nn.Sequential(
+                ConvBlock(256, 128),
+                ConvBlock(128, 128),
+                nn.ConvTranspose2d(128, 64, 2, 2)
+            ),
+            nn.Sequential(
+                ConvBlock(128, 64),
+                ConvBlock(64, 64),
+            )
+        ])
+
+        self.head = nn.Conv2d(64, n_classes, 1)
+
+        self.max_pool = nn.MaxPool2d(2)
+
+    def forward(self, x):
+        """
+        Predict the mask of a given input x.
+
+        Parameters
+        ----------
+        x : Tensor
+            The input of the network.
+
+        Return
+        ------
+        output : Tensor
+            The predicted mask.
+        """
+
+        outs = []
+
+        for contract in self.contractions:
+            x = contract(x)
+            outs.append(x)
+            x = self.max_pool(x)
+
+        x = self.middle(x)
+
+        for expand in self.expansions:
+            x = torch.cat([x, outs.pop()], dim=1)
+            x = expand(x)
 
         return self.head(x)
