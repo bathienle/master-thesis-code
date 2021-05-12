@@ -2,7 +2,7 @@
 Init import
 """
 
-from .datasets import CytomineDataset
+from .datasets import CytomineDataset, TestDataset
 from .losses import Loss
 from .model import NuClick
 from .metrics import IoU, DiceCoefficient, HausdorffDistance
