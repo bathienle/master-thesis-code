@@ -165,12 +165,12 @@ class NuClick(nn.Module):
     Reference paper: https://arxiv.org/pdf/2005.14511.pdf
     """
 
-    def __init__(self):
+    def __init__(self, in_channels=5):
         super().__init__()
 
         self.downs = nn.ModuleList([
             nn.Sequential(
-                ConvBlock(5, 64, 7, 3),
+                ConvBlock(in_channels, 64, 7, 3),
                 ConvBlock(64, 32, 5, 2),
                 ConvBlock(32, 32)
             ),
