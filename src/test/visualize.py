@@ -40,6 +40,18 @@ def parse_arguments():
         default='./',
         help="Path to save the segmentations."
     )
+    parser.add_argument(
+        '--min_size',
+        type=int,
+        default=100,
+        help="The smalled allowed object for the post processing."
+    )
+    parser.add_argument(
+        '--area_threshold',
+        type=int,
+        default=300,
+        help="The maximum area to fill for the post processing."
+    )
 
     return parser.parse_args()
 
@@ -165,7 +177,9 @@ if __name__ == "__main__":
         predictions = model(inputs)
 
     # Post-process the predictions
-    masks = post_process(predictions)
+    masks = post_process(
+        predictions, min_size=args.min_size, area_threshold=args.area_threshold
+    )
 
     # Construct the complete segmentation
     mask = merge_masks(image.shape[:2], masks, offsets)
