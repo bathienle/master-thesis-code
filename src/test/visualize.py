@@ -80,13 +80,14 @@ def get_patches(image, squiggles, signal, dim=(512, 512)):
     inputs = []
     offsets = []
     height, width = dim
+    shape = image.shape[:2]
 
     for squiggle in squiggles:
         x_max, y_max = max(squiggle[:, 0]), max(squiggle[:, 1])
 
         # Compute the top left corner coordinates of the crop
-        x = max(0, x_max - width)
-        y = max(0, y_max - height)
+        x = min(max(0, x_max - width // 2), shape[1] - width)
+        y = min(max(0, y_max - height // 2), shape[0] - height)
 
         offsets.append([x, y])
 
