@@ -5,7 +5,7 @@ Random squiggles generator
 import numpy as np
 
 from math import ceil, dist
-from skimage.draw import disk, line
+from skimage.draw import disk, line_aa
 
 
 def generate_squiggle(mask, origin, dest, min_line, n_step=5):
@@ -44,6 +44,7 @@ def generate_squiggle(mask, origin, dest, min_line, n_step=5):
     prev_step = 0
     curr_x, curr_y = origin
     xb, yb = dest
+    outside = False
 
     for step in steps:
         # Choose either the origin or the previous point as starting point
@@ -75,6 +76,10 @@ def generate_squiggle(mask, origin, dest, min_line, n_step=5):
         # Get the coordinates of the nonzero value
         indices = np.nonzero(image)
 
+        if len(indices[0]) == 0 or len(indices[1]) == 0:
+            outside = True
+            indices = np.nonzero(circleA & circleB)
+
         # Sample the next point inside the intersection region
         next_x = np.random.choice(indices[1])
         next_y = np.random.choice(indices[0])
@@ -82,12 +87,22 @@ def generate_squiggle(mask, origin, dest, min_line, n_step=5):
         db = ceil(dist((next_x, next_y), dest))
 
         # Sample a point until it respects all the constraints
-        while mask[next_y, next_x] != 255 or (da > radiusA+1 and db > radiusB+1):
-            next_x = np.random.choice(indices[1])
-            next_y = np.random.choice(indices[0])
+        if outside:
+            while da > radiusA+1 and db > radiusB+1:
+                next_x = np.random.choice(indices[1])
+                next_y = np.random.choice(indices[0])
 
-            da = ceil(dist((next_x, next_y), (curr_x, curr_y)))
-            db = ceil(dist((next_x, next_y), dest))
+                da = ceil(dist((next_x, next_y), (curr_x, curr_y)))
+                db = ceil(dist((next_x, next_y), dest))
+
+            outside = False
+        else:
+            while mask[next_y, next_x] != 255 or (da > radiusA+1 and db > radiusB+1):
+                next_x = np.random.choice(indices[1])
+                next_y = np.random.choice(indices[0])
+
+                da = ceil(dist((next_x, next_y), (curr_x, curr_y)))
+                db = ceil(dist((next_x, next_y), dest))
 
         # Save the sampled point
         points[step] = (next_x, next_y)
@@ -104,8 +119,8 @@ def generate_squiggle(mask, origin, dest, min_line, n_step=5):
     curr_x, curr_y = origin
     for step, point in points.items():
         next_x, next_y = point
-        rr, cc = line(curr_y, curr_x, next_y, next_x)
-        squiggle[rr, cc] = 255
+        rr, cc, val = line_aa(curr_y, curr_x, next_y, next_x)
+        squiggle[rr, cc] = val * 255
         curr_x, curr_y = next_x, next_y
 
     return squiggle

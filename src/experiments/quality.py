@@ -105,9 +105,9 @@ def compute_min_distance(contour):
 
     # Compute the distances for each pair of extreme points
     points = [leftmost, rightmost, topmost, bottommost]
-    distances = [dist(a, b) for (a, b) in combinations(points, 2)]
+    distances = [ceil(dist(a, b)) for (a, b) in combinations(points, 2)]
 
-    return max(distances) - min(distances)
+    return ceil(np.mean(distances))
 
 
 def create_inputs(image, mask, steps, min_area=1000):
@@ -218,6 +218,11 @@ if __name__ == "__main__":
     dice = DiceCoefficient()
     haus = HausdorffDistance()
 
+    # Create the output dirs if save is enabled
+    if args.save:
+        for subdir in ['drawings', 'squiggles', 'outputs']:
+            os.makedirs(os.path.join(args.save, subdir), exist_ok=True)
+
     for index, (inputs, targets, filenames) in enumerate(testloader):
         image = inputs[0]
         mask = to_uint8(targets[0].squeeze(0))
@@ -246,20 +251,20 @@ if __name__ == "__main__":
 
                 for signal in signals:
                     squiggle |= signal
-                    drawing[signal != 0, :] = [255, 0, 0]
+                    drawing[signal != 0, :] = [0, 255, 0]
 
                 # Save the image with the squiggle
-                path = os.path.join(args.save, f'{i}-drawing-{filename}')
+                path = os.path.join(args.save, 'drawings', f'{i}-{filename}')
                 drawing = Image.fromarray(drawing)
                 drawing.save(path)
 
                 # Save the squiggle only
-                path = os.path.join(args.save, f'{i}-squiggle-{filename}')
+                path = os.path.join(args.save, 'squiggles', f'{i}-{filename}')
                 squiggle = Image.fromarray(squiggle)
                 squiggle.save(path)
 
                 # Save the predicted mask
-                path = os.path.join(args.save, f'{i}-{filename}')
+                path = os.path.join(args.save, 'outputs', f'{i}-{filename}')
                 result = to_uint8(outputs[0].squeeze(0).cpu())
                 result = Image.fromarray(result)
                 result.save(path)
