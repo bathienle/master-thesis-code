@@ -204,7 +204,7 @@ if __name__ == "__main__":
     # Build the training and validation set
     train_data = TestDataset(os.path.join(args.data, 'train'))
     val_data = TestDataset(os.path.join(args.data, 'val'))
-    trainloader = DataLoader(train_data, args.batch_size, shuffle=args.shuffle)
+    trainloader = DataLoader(train_data, 4, shuffle=args.shuffle)
     valloader = DataLoader(val_data, args.batch_size, shuffle=args.shuffle)
 
     model = NuClick()
