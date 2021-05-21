@@ -10,9 +10,9 @@ import os
 from argparse import ArgumentParser
 from torch.utils.data import DataLoader
 
-from datasets import CytomineDataset
+from datasets import CytomineDataset, TestDataset
 from metrics import IoU, DiceCoefficient, HausdorffDistance
-from model import NuClick
+from model import NuClick, UNet
 from processing import post_process
 
 
@@ -60,6 +60,11 @@ def parse_arguments():
         type=int,
         default=0,
         help="The number of images used to train the model."
+    )
+    parser.add_argument(
+        '--model',
+        default="nuclick",
+        help="The model to use for the evaluation."
     )
 
     return parser.parse_args()
@@ -114,12 +119,15 @@ if __name__ == "__main__":
             writer = csv.DictWriter(file, fieldnames=header)
             writer.writeheader()
 
-    # Build the test set
-    test_set = CytomineDataset(os.path.join(args.data, 'test'))
-    testloader = DataLoader(test_set, args.batch_size)
+    # Build the test set and the model
+    if args.model == "nuclick":
+        test_set = CytomineDataset(os.path.join(args.data, 'test'))
+        model = NuClick().to(device)
+    elif args.model == "unet":
+        test_set = TestDataset(os.path.join(args.data, 'test'))
+        model = UNet().to(device)
 
-    # Load the model
-    model = NuClick().to(device)
+    testloader = DataLoader(test_set, args.batch_size)
     model.load_state_dict(torch.load(args.weight, map_location=device))
 
     # Evaluation
