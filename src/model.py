@@ -332,7 +332,10 @@ class UNet(nn.Module):
             )
         ])
 
-        self.head = nn.Conv2d(64, n_classes, 1)
+        self.head = nn.Sequential(
+            nn.Conv2d(64, n_classes, 1),
+            nn.Sigmoid()
+        )
 
         self.max_pool = nn.MaxPool2d(2)
 
