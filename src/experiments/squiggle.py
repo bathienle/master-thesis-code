@@ -123,4 +123,7 @@ def generate_squiggle(mask, origin, dest, min_line, n_step=5):
         squiggle[rr, cc] = val * 255
         curr_x, curr_y = next_x, next_y
 
+    rr, cc, val = line_aa(curr_y, curr_x, yb, xb)
+    squiggle[rr, cc] = val * 255
+
     return squiggle
