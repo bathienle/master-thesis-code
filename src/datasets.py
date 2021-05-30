@@ -116,18 +116,24 @@ class TestDataset(Dataset):
         The output dimension of the images.
     ret_filename : bool (default=False)
         Whether to return the filename or not.
+    n_image : int (default=0)
+        The maximum number of images to use from the dataset.
     """
 
-    def __init__(self, path, dim=(512, 512), ret_filename=False):
+    def __init__(self, path, dim=(512, 512), ret_filename=False, n_image=0):
         self.path = path
         self.dim = dim
         self.ret_filename = ret_filename
 
         # Keep the filename of each image
         self.filenames = os.listdir(os.path.join(path, 'images'))
+        
+        # Compute the number of images to work with
+        self.length = n_image if n_image else len(self.filenames)
+        self.length = min(self.length, len(self.filenames))
 
     def __len__(self):
-        return len(self.filenames)
+        return self.length
 
     def __getitem__(self, index):
         filename = self.filenames[index]

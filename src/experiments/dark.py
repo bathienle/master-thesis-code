@@ -65,6 +65,12 @@ def parse_arguments():
         default=5e-5,
         help="The weight decay of the optimizer."
     )
+    parser.add_argument(
+        '--size',
+        type=int,
+        default=0,
+        help="The number of images to use for training."
+    )
 
     # Misc parameters
     parser.add_argument(
@@ -202,7 +208,7 @@ if __name__ == "__main__":
             writer.writeheader()
 
     # Build the training and validation set
-    train_data = TestDataset(os.path.join(args.data, 'train'))
+    train_data = TestDataset(os.path.join(args.data, 'train'), n_image=args.size)
     val_data = TestDataset(os.path.join(args.data, 'val'))
     trainloader = DataLoader(train_data, 4, shuffle=args.shuffle)
     valloader = DataLoader(val_data, args.batch_size, shuffle=args.shuffle)
