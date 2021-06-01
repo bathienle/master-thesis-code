@@ -19,6 +19,7 @@ from src import (
     post_process, to_uint8
 )
 from squiggle import generate_squiggle
+from shape import generate_shape
 
 
 # Check if GPU is available
@@ -78,6 +79,12 @@ def parse_arguments():
         default=300,
         help="The maximum area to fill for the post processing."
     )
+    parser.add_argument(
+        '--squiggle',
+        default='random',
+        choices=['random', 'shape'],
+        help="The type of squiggle to generate."
+    )
 
     return parser.parse_args()
 
@@ -110,14 +117,12 @@ def compute_min_distance(contour):
     return ceil(np.mean(distances))
 
 
-def create_inputs(image, mask, steps, min_area=1000):
+def create_random_signal(mask, steps, min_area=1000):
     """
-    Create the input of the network using random squiggle to imitate the user.
+    Create random squiggles to imitate the user.
 
     Parameters
     ----------
-    image : NumPy array
-        The input image.
     mask : NumPy array
         The segmentation mask of the image.
     steps : int
@@ -127,8 +132,6 @@ def create_inputs(image, mask, steps, min_area=1000):
 
     Return
     ------
-    input : torch Tensor
-        The random generated squiggle.
     signals : list of NumPy array
         A list of squiggles.
     """
@@ -173,6 +176,75 @@ def create_inputs(image, mask, steps, min_area=1000):
         # Generate the squiggle based on the origin and destination point
         signal = generate_squiggle(object, (x1, y1), (x2, y2), min_line, steps)
         signals.append(signal)
+
+    return signals
+
+
+def create_shape_signal(mask, shape='c', min_area=1000):
+    """
+    Create shaped squiggles.
+
+    Parameters
+    ----------
+    mask : NumPy array
+        The segmentation mask of the image.
+    shape : string
+        The shape to draw.
+
+    Return
+    ------
+    signals : list of NumPy array
+        A list of squiggles.
+    """
+
+    # Remove small noises
+    mask[mask != 255] = 0
+
+    # Get the number of masks in the image
+    contours, _ = cv2.findContours(
+        mask,
+        cv2.RETR_EXTERNAL,
+        cv2.CHAIN_APPROX_SIMPLE
+    )
+    contours = [c for c in contours if cv2.contourArea(c) > min_area]
+
+    # Generate a squiggle per object
+    signals = []
+    for contour in contours:
+        # Generate the squiggle based on the origin and destination point
+        signal = generate_shape(mask, contour, shape=shape)
+        signals.append(signal)
+
+    return signals
+
+
+def create_inputs(image, mask, steps, min_area=1000, random='shape', shape='c'):
+    """
+    Create the inputs of the network.
+
+    Parameters
+    ----------
+    image : NumPy array
+        The input image.
+    mask : NumPy array
+        The segmentation mask of the image.
+    steps : int
+        The number of line segment to draw.
+    min_area : int (default=1000)
+        The minimum area to be considered as an object.
+
+    Return
+    ------
+    input : torch Tensor
+        The random generated squiggle.
+    signals : list of NumPy array
+        A list of squiggles.
+    """
+
+    if random == 'shape':
+        signals = create_shape_signal(mask, shape=shape)
+    else:
+        signals = create_random_signal(mask, steps, min_area=min_area)
 
     # Create the inclusion and exclusion map
     inclusion = torch.as_tensor(signals[0], dtype=torch.uint8).unsqueeze(0)
@@ -230,8 +302,16 @@ if __name__ == "__main__":
         targets = targets.to(device)
 
         for i in range(args.times):
+            # If shape, alternate between a circle and a square
+            if i % 2:
+                shape = 's'
+            else:
+                shape = 'c'
+
             # Create the inputs of the network
-            input, signals = create_inputs(image, mask, args.step)
+            input, signals = create_inputs(
+                image, mask, args.step, random=args.squiggle, shape=shape
+            )
             inputs = input.unsqueeze(0).to(device)
 
             with torch.no_grad():
