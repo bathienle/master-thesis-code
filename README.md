@@ -58,6 +58,16 @@ python3 train.py -h
 
 Since this implementation relies on the PyTorch framework, it will automatically use the GPU if it is enabled.
 
+### Evaluation
+
+To evaluate the trained neural network:
+```
+cd src/
+conda activate thesis
+python3 evaluate.py --data path_to_data --stat path_to_csv --weight path_to_weight --type type
+```
+where *path_to_data* is the path to the dataset and *path_to_csv* the path to store the CSV file, *path_to_weight* is the path to the weight with extension *.pth, and *type* is the type of object to segment. A remark about the *stat* option, in this case there is no need to specify the name of the csv as for the training. It will be automatically saved in a CSV file named *type*-evaluation.csv, where *type* is the type giving in the command line argument.
+
 ### Testing
 
 To test the program for one image:
