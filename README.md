@@ -1,5 +1,17 @@
 # Code for the Master Thesis
 
+This code was developed for my master thesis at the [University of Liège](https://www.uliege.be/), Belgium. The master thesis was conducted under the supervision of [Raphaël Marée](https://people.montefiore.uliege.be/maree/) within the [Cytomine ULiège R&D team](https://uliege.cytomine.org). The repository contains the reimplementation of a deep learning model, named NuClick, from the paper *NuClick: A Deep Learning Framework for Interactive Segmentation of Microscopy Images* available at [arXiv](https://arxiv.org/abs/2005.14511) with their implementation available on their [GitHub](https://github.com/navidstuv/NuClick).
+
+```
+@article{koohbanani:2020-nuclick,
+    author      = {Alemi Koohbanani, Navid and Jahanifar, Mostafa and Zamani Tajadin, Neda and Rajpoot, Nasir},
+    title       = {NuClick: A Deep Learning Framework for Interactive Segmentation  Microscopy Images},
+    journal     = {arXiv e-prints},
+    pages       = {arXiv:2005.14511},
+    year        = {2020}
+}
+```
+
 ## Requirements
 
 The implementation is done in Python 3.8 and it requires the following packages:
