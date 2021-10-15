@@ -1,6 +1,9 @@
 # Code for the Master Thesis
 
-This code was developed for my master thesis at the [University of Liège](https://www.uliege.be/), Belgium. The master thesis was conducted under the supervision of [Raphaël Marée](https://people.montefiore.uliege.be/maree/) within the [Cytomine ULiège R&D team](https://uliege.cytomine.org). The repository contains the reimplementation of a deep learning model, named NuClick, from the paper *NuClick: A Deep Learning Framework for Interactive Segmentation of Microscopy Images* available at [arXiv](https://arxiv.org/abs/2005.14511) with their implementation available on their [GitHub](https://github.com/navidstuv/NuClick).
+This code was developed for my master thesis at the [University of Liège](https://www.uliege.be/), Belgium.
+The thesis is available on the [MatheO](http://hdl.handle.net/2268.2/11470) platform.
+The master thesis was conducted under the supervision of [Raphaël Marée](https://people.montefiore.uliege.be/maree/) within the [Cytomine ULiège R&D team](https://uliege.cytomine.org).
+The repository contains the reimplementation of a deep learning model, named NuClick, from the paper *NuClick: A Deep Learning Framework for Interactive Segmentation of Microscopy Images* available at [arXiv](https://arxiv.org/abs/2005.14511) with their implementation available on their [GitHub](https://github.com/navidstuv/NuClick).
 
 ```
 @article{koohbanani:2020-nuclick,
